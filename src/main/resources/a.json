@@ -1,0 +1,13 @@
+{
+  "Hello": "World",
+  "HelloW": 5,
+  "Siko": null,
+  "Siko2": [
+    "Siko3",
+    "Siko4"
+  ],
+  "Siko5": {
+    "Siko6": "Siko7"
+  },
+  "Siko8": false
+}
