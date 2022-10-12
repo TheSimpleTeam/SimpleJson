@@ -1,10 +1,12 @@
 {
   "Hello": "World",
   "HelloW": 5,
+  "pi": 3.14159,
   "Siko": null,
   "Siko2": [
     "Siko3",
-    "Siko4"
+    "Siko4",
+    ""
   ],
   "Siko5": {
     "Siko6": "Siko7"

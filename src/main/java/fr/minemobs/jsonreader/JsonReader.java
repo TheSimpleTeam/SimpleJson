@@ -1,17 +1,19 @@
 package fr.minemobs.jsonreader;
 
+import fr.minemobs.jsonreader.parser.*;
 import net.thesimpleteam.colors.Colors;
 
 import java.awt.Color;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class JsonReader {
@@ -36,84 +38,95 @@ public class JsonReader {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws MalformedJsonException {
         JsonReader jr = new JsonReader();
-        if(args.length == 0) {
-            //Todo: Add support for redirection like this: java -jar jsonreader.jar < cat file.json
-            //It's just a BufferedReader that contains System.in
-            //https://stackoverflow.com/questions/25795568/how-to-redirect-a-file-as-an-input-to-java-program-with-bash
+        if (args.length == 0) {
             System.out.println("java -jar jsonreader.jar <path | url>");
             System.exit(1);
         }
-        String json = jr.read(args[0]);
+        String json = null;
+        try {
+            json = jr.read(args[0]);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
         List<String> lines = json.lines().toList();
-        AtomicInteger lineNumber = new AtomicInteger(0);
-        Pattern pattern = Pattern.compile("(?<key>.*\"*.\":)|(?<int>-?(?:\\d+\\.?\\d*|\\d*\\.?\\d+))|(?<bool>true|false)|(?<null>null)|(?<String>\".*\")|(?<default>[,\\[\\]{})])");
-        lines.forEach(l -> print(l, pattern, lineNumber));
+        AtomicInteger lineNumber = new AtomicInteger(1);
+        JsonElement parse = JsonParser.parse(lines);
+        AtomicInteger indentation = new AtomicInteger();
+        if (parse instanceof JsonObject obj) {
+            printObject("", obj, indentation, lineNumber, lines.size());
+        } else if (parse instanceof JsonArray array) {
+            printArray("", array, indentation, lineNumber, lines.size());
+        }
         System.out.println(Colors.RESET);
     }
 
-    private static void print(String l, Pattern pattern, AtomicInteger lineNumber) {
-        String line = l.trim();
-        System.out.print(Colors.getForegroundColorFromRGB(Color.DARK_GRAY) + lineNumber.getAndIncrement() + ": " + Colors.RESET);
-        System.out.print(" ".repeat(l.length() - l.stripLeading().length()));
-        Matcher matcher = pattern.matcher(line);
-        while(matcher.find()) {
-            if(matcher.group("key") != null) {
-                System.out.print(TypeColor.KEY.getColor() + matcher.group("key").substring(0, matcher.group("key").length() - 1) + TypeColor.DEFAULT.getColor() + ": ");
-            } else if(matcher.group("int") != null) {
-                System.out.print(TypeColor.NUMBER.getColor() + matcher.group("int") + TypeColor.DEFAULT.getColor());
-            } else if(matcher.group("bool") != null) {
-                System.out.print(TypeColor.BOOLEAN.getColor() + matcher.group("bool") + TypeColor.DEFAULT.getColor());
-            } else if (matcher.group("null") != null) {
-                System.out.print(TypeColor.NULL.getColor() + "null" + TypeColor.DEFAULT.getColor());
-            } else if (matcher.group("String") != null) {
-                System.out.print(TypeColor.STRING.getColor() + matcher.group("String") + TypeColor.DEFAULT.getColor());
-            } else if(matcher.group("default") != null) {
-                System.out.print(TypeColor.DEFAULT.getColor() + matcher.group("default"));
+    private static void printObject(String baseKey, JsonObject obj, AtomicInteger indentation, AtomicInteger lineNumber, int size) {
+        System.out.println(Colors.getForegroundColorFromRGB(Color.DARK_GRAY) + formatNumber(lineNumber.get(), size) + ": " + " ".repeat(indentation.get()) +
+                (baseKey.isEmpty() ? "" : TypeColor.KEY.getColor() + "\"" + baseKey + "\"" + TypeColor.DEFAULT.getColor() + ": ") +
+                TypeColor.DEFAULT.getColor() + "{");
+        indentation.addAndGet(2);
+        for (Map.Entry<String, JsonElement> entry : obj.getElements().entrySet()) {
+            String line = Colors.getForegroundColorFromRGB(Color.DARK_GRAY) + formatNumber(lineNumber.incrementAndGet(), size) + ": ";
+            String key = entry.getKey();
+            if (entry.getValue() instanceof JsonPrimitive primitive) {
+                TypeColor primitiveColor = getPrimitiveColor(primitive);
+                System.out.println(line + " ".repeat(indentation.get()) + TypeColor.KEY.getColor() + "\"" + key + "\"" +
+                        TypeColor.DEFAULT.getColor() + ": " + primitiveColor.getColor() + format(primitive) + TypeColor.DEFAULT.getColor() + ",");
+            } else if (entry.getValue() instanceof JsonObject object) {
+                printObject(key, object, indentation, lineNumber, size);
+            } else if (entry.getValue() instanceof JsonArray array) {
+                printArray(key, array, indentation, lineNumber, size);
             }
         }
-        System.out.println();
+        indentation.addAndGet(-2);
+        System.out.println(Colors.getForegroundColorFromRGB(Color.DARK_GRAY) + formatNumber(lineNumber.incrementAndGet(), size) + ": " + TypeColor.DEFAULT.getColor() + " ".repeat(indentation.get()) + "}");
     }
 
-    private String prettyPrint(String j) {
-        List<Character> indentChar = List.of('{', '[', ',', '}', ']');
-        String json = j.trim().replace("\n", "");
-        Pattern p = Pattern.compile("\"(.*?)\"|\\S+");
-        Matcher m = p.matcher(json);
-        StringBuilder sb = new StringBuilder();
-        char lastChar = 0;
-        int indent = 0;
-        while(m.find()) {
-            sb.append(m.group());
-        }
-        json = sb.toString();
-        sb = new StringBuilder();
-        for (char c : json.toCharArray()) {
-            if (c == '{' || c == '[') {
-                sb.append(" ".repeat(indent)).append(c).append("\n");
-                indent += 2;
-            } else if (c == '}' || c == ']') {
-                indent -= 2;
-                sb.append("\n").append(" ".repeat(indent)).append(c);
-            } else if (c == ',') {
-                sb.append(c).append("\n");
-            } else {
-                sb.append(" ".repeat(indentChar.contains(lastChar) ? indent : 0)).append(c);
+    private static String formatNumber(int i, int length) {
+        return String.format("%0" + (Math.log10(length) + 1) + "d", i);
+    }
+
+    private static void printArray(String baseKey, JsonArray array, AtomicInteger indentation, AtomicInteger lineNumber, int size) {
+        System.out.println(Colors.getForegroundColorFromRGB(Color.DARK_GRAY) + formatNumber(lineNumber.get(), size) + ": " + " ".repeat(indentation.get()) +
+                (baseKey.isEmpty() ? "" : TypeColor.KEY.getColor() + "\"" + baseKey + "\"" + TypeColor.DEFAULT.getColor() + ": ") +
+                TypeColor.DEFAULT.getColor() + "[");
+        indentation.addAndGet(2);
+        array.forEach(element -> {
+            String line = Colors.getForegroundColorFromRGB(Color.DARK_GRAY) + formatNumber(lineNumber.incrementAndGet(), size) + ": ";
+            if (element instanceof JsonPrimitive primitive) {
+                TypeColor primitiveColor = getPrimitiveColor(primitive);
+                System.out.println(line + " ".repeat(indentation.get()) + primitiveColor.getColor() + format(primitive) + TypeColor.DEFAULT.getColor() + ",");
+            } else if (element instanceof JsonObject object) {
+                indentation.addAndGet(2);
+                printObject("", object, indentation, lineNumber, size);
+                indentation.addAndGet(-2);
             }
-            lastChar = c;
-        }
-        return sb.toString();
+        });
+        indentation.addAndGet(-2);
+        System.out.println(Colors.getForegroundColorFromRGB(Color.DARK_GRAY) + formatNumber(lineNumber.incrementAndGet(), size) + ": " + TypeColor.DEFAULT.getColor() + " ".repeat(indentation.get()) + "]");
     }
 
-    private String read(String arg) {
+    private static String format(JsonPrimitive primitive) {
+        return primitive.getType() == JsonPrimitive.Type.STRING ? "\"" + primitive.getValue() + "\"" : String.valueOf(primitive.getValue());
+    }
+
+    private static TypeColor getPrimitiveColor(JsonPrimitive primitive) {
+        return switch (primitive.getType()) {
+            case STRING -> TypeColor.STRING;
+            case NUMBER -> TypeColor.NUMBER;
+            case BOOLEAN -> TypeColor.BOOLEAN;
+            case DEFAULT -> TypeColor.DEFAULT;
+        };
+    }
+
+    private String read(String arg) throws IOException {
         Path filePath = Path.of(arg);
         if (Files.exists(filePath)) {
-            try(BufferedReader reader = Files.newBufferedReader(filePath)) {
-                return prettyPrint(reader.lines().collect(Collectors.joining("\n")));
-            } catch (IOException e) {
-                System.out.println("Error while reading the file: " + e.getMessage());
-                System.exit(10);
+            try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+                return reader.lines().collect(Collectors.joining("\n"));
             }
         } else {
             URL url = null;
@@ -124,14 +137,10 @@ public class JsonReader {
                 System.exit(11);
             }
             ByteArrayOutputStream writer = new ByteArrayOutputStream();
-            try(InputStream is = url.openStream()) {
+            try (InputStream is = url.openStream()) {
                 is.transferTo(writer);
-            } catch (IOException e) {
-                System.out.println("Error while reading the file from the URL: " + e.getMessage());
-                System.exit(12);
             }
-            return prettyPrint(writer.toString());
+            return writer.toString();
         }
-        return null;
     }
 }
