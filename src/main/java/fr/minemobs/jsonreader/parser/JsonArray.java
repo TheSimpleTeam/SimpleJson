@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class JsonArray extends JsonElement {
+public non-sealed class JsonArray extends JsonElement {
 
     private final List<JsonElement> elements;
 

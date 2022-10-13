@@ -74,7 +74,7 @@ public class JsonReader {
             if (entry.getValue() instanceof JsonPrimitive primitive) {
                 TypeColor primitiveColor = getPrimitiveColor(primitive);
                 System.out.println(line + " ".repeat(indentation.get()) + TypeColor.KEY.getColor() + "\"" + key + "\"" +
-                        TypeColor.DEFAULT.getColor() + ": " + primitiveColor.getColor() + format(primitive) + TypeColor.DEFAULT.getColor() + ",");
+                                   TypeColor.DEFAULT.getColor() + ": " + primitiveColor.getColor() + format(primitive) + TypeColor.DEFAULT.getColor() + ",");
             } else if (entry.getValue() instanceof JsonObject object) {
                 printObject(key, object, indentation, lineNumber, size);
             } else if (entry.getValue() instanceof JsonArray array) {
@@ -86,7 +86,7 @@ public class JsonReader {
     }
 
     private static String formatNumber(int i, int length) {
-        return String.format("%0" + (Math.log10(length) + 1) + "d", i);
+        return String.format("%0" + String.valueOf(length).length() + "d", i);
     }
 
     private static void printArray(String baseKey, JsonArray array, AtomicInteger indentation, AtomicInteger lineNumber, int size) {

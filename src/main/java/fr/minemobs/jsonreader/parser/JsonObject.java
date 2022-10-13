@@ -1,14 +1,10 @@
 package fr.minemobs.jsonreader.parser;
 
-import fr.minemobs.jsonreader.JsonReader;
-import fr.minemobs.jsonreader.MalformedJsonException;
-
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class JsonObject extends JsonElement {
+public non-sealed class JsonObject extends JsonElement {
 
     private final Map<String, JsonElement> elements;
 
@@ -17,7 +13,7 @@ public class JsonObject extends JsonElement {
     }
 
     public JsonObject(Map<String, JsonElement> elements) {
-        super(elements);
+        super(new LinkedHashMap<>(elements));
         this.elements = elements;
     }
 
@@ -35,19 +31,5 @@ public class JsonObject extends JsonElement {
 
     public Map<String, JsonElement> getElements() {
         return Collections.unmodifiableMap(elements);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("{");
-        elements.forEach((key, value) -> builder.append("\"").append(key).append("\":").append(value.toString()).append(","));
-        if (builder.length() > 1) {
-            builder.deleteCharAt(builder.length() - 1);
-        } else if(builder.charAt(builder.length() - 1) == ',') {
-            builder.deleteCharAt(builder.length() - 1);
-        }
-        builder.append("}");
-        return builder.toString();
     }
 }

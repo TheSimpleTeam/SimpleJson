@@ -10,15 +10,13 @@ version '1.0-SNAPSHOT'
 application {
     mainClassName = 'fr.minemobs.jsonreader.JsonReader'
     run {
-        workingDir = file(sourceSets.main.resources.srcDirs[0])
-        args('b.json')
+        args('example.json')
     }
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 repositories {
-    mavenCentral()
     maven {
         url "https://jitpack.io"
     }
@@ -26,16 +24,4 @@ repositories {
 
 dependencies {
     implementation 'com.github.TheSimpleTeam:Colors:59450963b7'
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDirs "src/main/resources"
-        }
-    }
-}
-
-processResources {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

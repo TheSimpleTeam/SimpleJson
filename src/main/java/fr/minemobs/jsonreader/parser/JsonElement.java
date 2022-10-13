@@ -1,6 +1,6 @@
 package fr.minemobs.jsonreader.parser;
 
-public abstract class JsonElement {
+public abstract sealed class JsonElement permits JsonArray, JsonObject, JsonPrimitive {
 
     private final Object value;
 
@@ -10,5 +10,9 @@ public abstract class JsonElement {
 
     public Object getValue() {
         return value;
+    }
+
+    public <T> T getValue(Class<T> type) {
+        return type.cast(value);
     }
 }
