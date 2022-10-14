@@ -3,6 +3,7 @@ package fr.minemobs.jsonreader.parser;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public non-sealed class JsonObject extends JsonElement {
 
@@ -25,11 +26,22 @@ public non-sealed class JsonObject extends JsonElement {
         return elements.get(key);
     }
 
+    public <T extends JsonElement> T get(String key, Class<T> type) {
+        return (T) elements.get(key);
+    }
+
     public boolean containsKey(String key) {
         return elements.containsKey(key);
     }
 
     public Map<String, JsonElement> getElements() {
         return Collections.unmodifiableMap(elements);
+    }
+
+    @Override
+    public String toString() {
+        return "JsonObject{" +
+                "elements={" + elements.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining(",")) + "}" +
+                '}';
     }
 }

@@ -22,6 +22,22 @@ public non-sealed class JsonPrimitive extends JsonElement {
         STRING, NUMBER, BOOLEAN, DEFAULT;
     }
 
+    public int getValueAsInt() {
+        return (int) getValue();
+    }
+
+    public double getValueAsDouble() {
+        return (double) getValue();
+    }
+
+    public boolean getValueAsBoolean() {
+        return (boolean) getValue();
+    }
+
+    public String getValueAsString() {
+        return (String) getValue();
+    }
+
     @Override
     public String toString() {
         return this.getValue() == null ? "null" : this.getValue().toString();

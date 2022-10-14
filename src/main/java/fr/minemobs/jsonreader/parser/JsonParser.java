@@ -13,7 +13,7 @@ public class JsonParser {
             "(?<key>\"\\w+\":)|" +
             "(?<null>null)|" +
             "(?<primitive>(?<bool>false|true)|" +
-            "(?<string>\"(?:[^\"\\\\]|\\.)*\")|" +
+            "(?<string>\"(?:[^\"\\\\]|\\\\.)*\")|" +
             "(?<int>\\d+(\\.\\d+)?)),?|" +
             "(?<obj>\\{)|" + "(?<endObj>})|" +
             "(?<array>\\[)|(?<endArray>])");
@@ -63,7 +63,11 @@ public class JsonParser {
             String value = matcher.group("string");
             return new JsonPrimitive(value.substring(1, value.length() - 1));
         } else if(group(matcher, "int")) {
-            return new JsonPrimitive(Double.parseDouble(matcher.group("int")));
+            try {
+                return new JsonPrimitive(Integer.parseInt(matcher.group("int")));
+            } catch (NumberFormatException ignored) {
+                return new JsonPrimitive(Double.parseDouble(matcher.group("int")));
+            }
         } else if(group(matcher, "bool")) {
             return new JsonPrimitive(Boolean.parseBoolean(matcher.group("bool")));
         } else throw new MalformedJsonException("Invalid json, unknown primitive type for " + line);

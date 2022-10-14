@@ -12,6 +12,18 @@ public abstract sealed class JsonElement permits JsonArray, JsonObject, JsonPrim
         return value;
     }
 
+    public JsonObject getAsJsonObject() {
+        return (JsonObject) this;
+    }
+
+    public JsonPrimitive getAsJsonPrimitive() {
+        return (JsonPrimitive) this;
+    }
+
+    public JsonArray getAsJsonArray() {
+        return (JsonArray) this;
+    }
+
     public <T> T getValue(Class<T> type) {
         return type.cast(value);
     }
