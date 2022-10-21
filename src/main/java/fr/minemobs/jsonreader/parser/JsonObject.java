@@ -27,7 +27,7 @@ public non-sealed class JsonObject extends JsonElement {
     }
 
     public <T extends JsonElement> T get(String key, Class<T> type) {
-        return (T) elements.get(key);
+        return type.cast(elements.get(key));
     }
 
     public boolean containsKey(String key) {

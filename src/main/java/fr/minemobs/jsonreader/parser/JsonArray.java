@@ -44,6 +44,10 @@ public non-sealed class JsonArray extends JsonElement {
         elements.forEach(consumer);
     }
 
+    public JsonElement[] getArray() {
+        return elements.toArray(JsonElement[]::new);
+    }
+
     @Override
     public String toString() {
         return "JsonArray{" +
