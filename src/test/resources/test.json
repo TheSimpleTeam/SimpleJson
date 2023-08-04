@@ -1,0 +1,15 @@
+//Some funny comments
+//I guess
+  
+{
+  "hello": "world",
+  "numberOfRatiosGiven": 213,
+  "nested": {
+    "hi": "guys",
+  },
+  "names": [
+    "minemobs",
+    "other guy I guess",
+    "yes"
+  ]
+}
